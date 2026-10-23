@@ -1,12 +1,12 @@
 /* ============================================================
    NIGHT DRIFT — portage NumWorks (.nwa)
-   Jeu de drift nocturne pseudo-3D, inspiré des "night drift"
+   Jeu de drift nocturne pseudo-3D, inspire des "night drift"
    jouables en ligne. Ecran 320x240, EADK C.
    Contrôles :
-     <- / -> : tourner (drift à vitesse élevée)
-     ^ : accélérer
-     v : freiner
-     OK : (re)commencer
+     <- / ->  : tourner (drift a vitesse elevee)
+     ^        : accelerer
+     v        : freiner
+     OK       : (re)commencer
      Back/Power : quitter
    ============================================================ */
 #include <eadk.h>
@@ -26,25 +26,25 @@ const uint32_t eadk_api_level __attribute__((section(".rodata.eadk_api_level")))
 /* RGB565 : eadk_color_t est un uint16_t */
 #define C(r,g,b) ((eadk_color_t)((((r)&0xF8)<<8)|(((g)&0xFC)<<3)|(((b)&0xF8)>>3)))
 
-static const eadk_color_t COL_SKY = C(4,6,20);
-static const eadk_color_t COL_STAR = C(220,225,255);
-static const eadk_color_t COL_GROUND = C(2,4,10);
-static const eadk_color_t COL_ROAD_A = C(22,22,30);
-static const eadk_color_t COL_ROAD_B = C(28,28,38);
-static const eadk_color_t COL_DASH = C(216,200,0);
-static const eadk_color_t COL_CURB_R = C(216,0,0);
-static const eadk_color_t COL_CURB_W = C(222,222,222);
-static const eadk_color_t COL_LAMP = C(255,200,32);
-static const eadk_color_t COL_POLE = C(60,60,70);
-static const eadk_color_t COL_BODY = C(220,30,30);
-static const eadk_color_t COL_ROOF = C(30,30,44);
-static const eadk_color_t COL_TAIL = C(255,40,40);
-static const eadk_color_t COL_HEAD = C(255,250,200);
-static const eadk_color_t COL_SMOKE = C(90,90,100);
-static const eadk_color_t COL_CITY = C(10,10,18);
-static const eadk_color_t COL_WINDOW = C(255,190,80);
-static const eadk_color_t COL_TEXT = C(255,255,255);
-static const eadk_color_t COL_ACCENT = C(255,200,32);
+static const eadk_color_t COL_SKY     = C(4,6,20);
+static const eadk_color_t COL_STAR    = C(220,225,255);
+static const eadk_color_t COL_GROUND  = C(2,4,10);
+static const eadk_color_t COL_ROAD_A  = C(22,22,30);
+static const eadk_color_t COL_ROAD_B  = C(28,28,38);
+static const eadk_color_t COL_DASH    = C(216,200,0);
+static const eadk_color_t COL_CURB_R  = C(216,0,0);
+static const eadk_color_t COL_CURB_W  = C(222,222,222);
+static const eadk_color_t COL_LAMP    = C(255,200,32);
+static const eadk_color_t COL_POLE    = C(60,60,70);
+static const eadk_color_t COL_BODY    = C(220,30,30);
+static const eadk_color_t COL_ROOF    = C(30,30,44);
+static const eadk_color_t COL_TAIL    = C(255,40,40);
+static const eadk_color_t COL_HEAD    = C(255,250,200);
+static const eadk_color_t COL_SMOKE   = C(90,90,100);
+static const eadk_color_t COL_CITY    = C(10,10,18);
+static const eadk_color_t COL_WINDOW  = C(255,190,80);
+static const eadk_color_t COL_TEXT    = C(255,255,255);
+static const eadk_color_t COL_ACCENT  = C(255,200,32);
 
 /* ---------- Virages du circuit (valeurs par tranche de 200 m) ---------- */
 static const float s_curves[16] = {
@@ -61,20 +61,20 @@ static float track_curve(float z) {
 /* ---------- Trafic ---------- */
 #define N_CARS 4
 typedef struct {
-  float z; /* position absolue sur la piste */
-  float lane; /* -1 .. 1 (gauche..droite) */
+  float z;
+  float lane;
   eadk_color_t col;
 } Traffic;
 
 /* ---------- Etat du jeu ---------- */
 typedef struct {
-  float playerZ; /* distance parcourue (m) */
-  float playerX; /* position laterale -1.5..1.5 */
-  float speed; /* km/h (0..260) */
-  float driftAngle; /* -1..1 */
-  int score;
-  int best;
-  int crashFlash;
+  float playerZ;
+  float playerX;
+  float speed;
+  float driftAngle;
+  int   score;
+  int   best;
+  int   crashFlash;
   Traffic cars[N_CARS];
 } Game;
 
@@ -101,7 +101,6 @@ static void fill_rect(int x, int y, int w, int h, eadk_color_t c) {
   eadk_display_push_rect_uniform((eadk_rect_t){(uint16_t)x,(uint16_t)y,(uint16_t)w,(uint16_t)h}, c);
 }
 
-/* hash deterministe pour les etoiles / ville (pas de Random a chaque frame) */
 static unsigned int hash(unsigned int x) {
   x = (x << 13) ^ x;
   return (x * (x * x * 15731 + 789221) + 1376312589) & 0x7fffffff;
@@ -109,16 +108,14 @@ static unsigned int hash(unsigned int x) {
 
 static void draw_night_background(void) {
   fill_rect(0, 0, W, HORIZON, COL_SKY);
-  /* etoiles */
   for (unsigned int i = 0; i < 90; i++) {
     unsigned int h1 = hash(i + 1);
     unsigned int h2 = hash(i + 77);
     int sx = (int)(h1 % W);
-        int sy = (int)(h2 % (HORIZON - 30));
-    if ((h1 & 7) != 0) continue; /* clignote un peu : 1 etoile sur 8 */
+    int sy = (int)(h2 % (HORIZON - 30));
+    if ((h1 & 7) != 0) continue;
     fill_rect(sx, sy, 1, 1, COL_STAR);
   }
-  /* skyline : immeubles avec fenetres allumees */
   int bx = 0;
   unsigned int bi = 0;
   while (bx < W) {
@@ -136,7 +133,6 @@ static void draw_night_background(void) {
   }
 }
 
-/* projette une distance (m) en ecart vertical t (1 = horizon, 144 = bas) */
 static int project_t(float worldZ) {
   if (worldZ <= 220.0f) return 144;
   int t = (int)(15000.0f / (worldZ - 100.0f));
@@ -147,8 +143,6 @@ static int project_t(float worldZ) {
 
 static void draw_scene(Game *g) {
   draw_night_background();
-
-  /* --- sol + route, du fond vers l'avant --- */
   fill_rect(0, HORIZON, W, H - HORIZON, COL_GROUND);
 
   for (int t = 1; t <= 144; t += 2) {
@@ -158,27 +152,21 @@ static void draw_scene(Game *g) {
     int stripe = ((int)(segZ / 25.0f)) & 1;
 
     float halfW = 10.0f + (float)t * t * 0.0055f;
-    float center = 160.0f
-                 + curve * t * t * 0.0035f
-                 - g->playerX * halfW * 0.9f;
+    float center = 160.0f + curve * t * t * 0.0035f - g->playerX * halfW * 0.9f;
 
-    int y = H - t; /* t=144 (proche) -> bas de l'ecran ; t=1 -> juste sous l'horizon */
+    int y = H - t;
     int cx = (int)center;
     int hw = (int)halfW;
 
-    /* route */
     eadk_color_t roadCol = stripe ? COL_ROAD_B : COL_ROAD_A;
     fill_rect(cx - hw, y, hw * 2, 2, roadCol);
 
-    /* bordures (curbs) */
     eadk_color_t curb = stripe ? COL_CURB_W : COL_CURB_R;
     fill_rect(cx - hw, y, 3, 2, curb);
     fill_rect(cx + hw - 3, y, 3, 2, curb);
 
-    /* ligne pointillee centrale */
     if (stripe) fill_rect(cx - 1, y, 2, 2, COL_DASH);
 
-    /* lampadaires periodiques */
     int lampIdx = (int)(segZ / 120.0f);
     if ((lampIdx & 3) == 0) {
       int px = cx - hw - 5;
@@ -190,7 +178,6 @@ static void draw_scene(Game *g) {
     }
   }
 
-  /* --- trafic --- */
   for (int i = 0; i < N_CARS; i++) {
     float rel = g->cars[i].z - g->playerZ;
     if (rel < 220.0f || rel > 15200.0f) continue;
@@ -203,18 +190,15 @@ static void draw_scene(Game *g) {
     int cw = scale * 6, ch = scale * 4;
     int y = H - t - ch;
     fill_rect((int)x - cw/2, y, cw, ch, g->cars[i].col);
-    /* feux arrieres */
     fill_rect((int)x - cw/2, y + ch/2, scale, scale, COL_TAIL);
     fill_rect((int)x + cw/2 - scale, y + ch/2, scale, scale, COL_TAIL);
   }
 
-  /* --- voiture du joueur --- */
   {
     int px = 160 + (int)(g->driftAngle * 14.0f);
     int py = H - 62;
     if (g->crashFlash > 0 && (g->crashFlash & 1)) px += 3;
 
-    /* fumee de drift */
     if (g->driftAngle > 0.35f || g->driftAngle < -0.35f) {
       int sx = (g->driftAngle > 0) ? px - 30 : px + 10;
       for (int s = 0; s < 5; s++) {
@@ -223,22 +207,18 @@ static void draw_scene(Game *g) {
       }
     }
 
-    /* roues */
     fill_rect(px - 24, py + 24, 10, 12, COL_ROOF);
     fill_rect(px + 14, py + 24, 10, 12, COL_ROOF);
-    /* carrosserie */
     fill_rect(px - 22, py + 8, 44, 18, COL_BODY);
-    fill_rect(px - 18, py + 2, 36, 8, COL_ROOF); /* habitacle */
-    fill_rect(px - 14, py + 3, 12, 5, COL_SKY); /* vitre g */
-    fill_rect(px + 2, py + 3, 12, 5, COL_SKY); /* vitre d */
-    /* feux */
+    fill_rect(px - 18, py + 2, 36, 8, COL_ROOF);
+    fill_rect(px - 14, py + 3, 12, 5, COL_SKY);
+    fill_rect(px + 2, py + 3, 12, 5, COL_SKY);
     fill_rect(px - 22, py + 12, 3, 3, COL_TAIL);
     fill_rect(px + 19, py + 12, 3, 3, COL_TAIL);
     fill_rect(px - 18, py + 16, 3, 2, COL_HEAD);
     fill_rect(px + 15, py + 16, 3, 2, COL_HEAD);
   }
 
-  /* --- HUD --- */
   char buf[48];
   snprintf(buf, sizeof(buf), "SCORE %d", g->score);
   eadk_display_draw_string(buf, (eadk_point_t){8, 8}, false, COL_TEXT, COL_SKY);
@@ -249,7 +229,6 @@ static void draw_scene(Game *g) {
   snprintf(buf, sizeof(buf), "%d m", (int)g->playerZ);
   eadk_display_draw_string(buf, (eadk_point_t){W - 90, 24}, false, COL_TEXT, COL_SKY);
 
-  /* jauge de drift */
   int meterW = (int)((g->driftAngle < 0 ? -g->driftAngle : g->driftAngle) * 60.0f);
   fill_rect(W/2 - 62, 10, 124, 4, C(30,30,40));
   fill_rect(W/2 - 60, 11, meterW, 2, g->driftAngle > 0 ? COL_ACCENT : COL_TAIL);
@@ -261,7 +240,6 @@ static void draw_scene(Game *g) {
   }
 }
 
-/* ---------- Ecran titre ---------- */
 static int title_screen(int best) {
   eadk_display_push_rect_uniform(eadk_screen_rect, COL_SKY);
   for (unsigned int i = 0; i < 120; i++) {
@@ -273,6 +251,7 @@ static int title_screen(int best) {
   eadk_display_draw_string("Portage NumWorks", (eadk_point_t){110, 105}, false, COL_TEXT, COL_SKY);
   eadk_display_draw_string("fleches : conduire / drifter", (eadk_point_t){70, 140}, false, COL_TEXT, COL_SKY);
   eadk_display_draw_string("OK : demarrer   Back : quitter", (eadk_point_t){60, 160}, false, COL_TEXT, COL_SKY);
+  char buf[32];
   snprintf(buf, sizeof(buf), "Meilleur score : %d", best);
   eadk_display_draw_string(buf, (eadk_point_t){95, 195}, false, COL_ACCENT, COL_SKY);
 
@@ -284,7 +263,6 @@ static int title_screen(int best) {
   }
 }
 
-/* ---------- Boucle principale ---------- */
 int main(int argc, char * argv[]) {
   (void)argc; (void)argv;
   int best = 0;
@@ -298,51 +276,43 @@ int main(int argc, char * argv[]) {
       if (eadk_keyboard_key_down(k, eadk_key_back)) break;
 
       int steer = 0;
-      if (eadk_keyboard_key_down(k, eadk_key_left)) steer -= 1;
+      if (eadk_keyboard_key_down(k, eadk_key_left))  steer -= 1;
       if (eadk_keyboard_key_down(k, eadk_key_right)) steer += 1;
 
-      /* --- physique --- */
       if (eadk_keyboard_key_down(k, eadk_key_up)) {
         g.speed += 3.2f;
       } else if (eadk_keyboard_key_down(k, eadk_key_down)) {
         g.speed -= 5.0f;
       } else {
-        g.speed -= 0.8f; /* frottement */
+        g.speed -= 0.8f;
       }
       if (g.speed < 0) g.speed = 0;
       if (g.speed > 260) g.speed = 260;
 
-      /* hors piste : on ralentit fort */
       float absX = g.playerX < 0 ? -g.playerX : g.playerX;
       int offroad = absX > 1.15f;
       if (offroad) g.speed -= 6.0f;
 
-      /* derive / drift */
       float target = (float)steer;
       g.driftAngle += (target - g.driftAngle) * 0.18f;
       g.playerX += (g.driftAngle * 0.030f) * (0.5f + g.speed / 260.0f);
       if (g.playerX < -1.6f) g.playerX = -1.6f;
-      if (g.playerX > 1.6f) g.playerX = 1.6f;
+      if (g.playerX > 1.6f)  g.playerX = 1.6f;
 
-      /* score de drift : vitesse elevee + angle fort */
       float absDrift = g.driftAngle < 0 ? -g.driftAngle : g.driftAngle;
       if (g.speed > 90.0f && absDrift > 0.35f) {
         g.score += (int)(absDrift * g.speed * 0.012f);
       }
-      g.score += (int)(g.speed * 0.004f); /* progression */
+      g.score += (int)(g.speed * 0.004f);
 
-      /* avance */
       g.playerZ += g.speed * 0.055f;
 
-      /* trafic : les voitures roulent aussi (lentement) */
       for (int i = 0; i < N_CARS; i++) {
         g.cars[i].z += 1.1f;
-        /* recyclage : une voiture depassee revient devant */
         if (g.cars[i].z - g.playerZ < -50.0f) {
           g.cars[i].z = g.playerZ + 9000.0f + (float)(eadk_random() % 5000);
           g.cars[i].lane = (float)((eadk_random() % 3)) - 1.0f;
         }
-        /* collision */
         float rel = g.cars[i].z - g.playerZ;
         float laneDiff = g.cars[i].lane - g.playerX;
         if (laneDiff < 0) laneDiff = -laneDiff;
