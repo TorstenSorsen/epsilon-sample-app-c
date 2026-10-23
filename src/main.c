@@ -1,3 +1,4 @@
+#include <eadk.h>
 /* ============================================================
    NIGHT DRIFT — portage NumWorks (.nwa)
    Jeu de drift nocturne pseudo-3D, inspire des "night drift"
