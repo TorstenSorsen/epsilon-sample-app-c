@@ -114,7 +114,7 @@ static void draw_night_background(void) {
     unsigned int h1 = hash(i + 1);
     unsigned int h2 = hash(i + 77);
     int sx = (int)(h1 % W);
-    int sy = (int)(h2 % (HORIZON - 30));
+        int sy = (int)(h2 % (HORIZON - 30));
     if ((h1 & 7) != 0) continue; /* clignote un peu : 1 etoile sur 8 */
     fill_rect(sx, sy, 1, 1, COL_STAR);
   }
@@ -272,8 +272,7 @@ static int title_screen(int best) {
   eadk_display_draw_string("NIGHT DRIFT", (eadk_point_t){70, 70}, true, COL_ACCENT, COL_SKY);
   eadk_display_draw_string("Portage NumWorks", (eadk_point_t){110, 105}, false, COL_TEXT, COL_SKY);
   eadk_display_draw_string("fleches : conduire / drifter", (eadk_point_t){70, 140}, false, COL_TEXT, COL_SKY);
-  eadk_display_draw_string("OK : demarrer Back : quitter", (eadk_point_t){60, 160}, false, COL_TEXT, COL_SKY);
-  char buf[32];
+  eadk_display_draw_string("OK : demarrer   Back : quitter", (eadk_point_t){60, 160}, false, COL_TEXT, COL_SKY);
   snprintf(buf, sizeof(buf), "Meilleur score : %d", best);
   eadk_display_draw_string(buf, (eadk_point_t){95, 195}, false, COL_ACCENT, COL_SKY);
 
